@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
-from SendPayload import send_payload
+from src.SendPayload import send_payload
 from src.delete_payload import handle_delete_payload
 from src.download_payload import handle_url_download
 import time
