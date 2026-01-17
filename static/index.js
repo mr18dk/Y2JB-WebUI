@@ -27,47 +27,41 @@ async function getJSONValue(filename, property) {
 }
 
 async function uploadPayload() {
-  try {
     const fileInput = document.getElementById('fileInput');
     const file = fileInput.files[0];
-    const statusEl = document.getElementById('uploadStatus');
+    const upBtn = document.getElementById('UPB');
 
     if (!file) {
-      statusEl.textContent = 'Please select a file first';
-      statusEl.className = "text-xs text-right mb-2 text-red-500 font-bold";
-      return;
+        Toast.show('Please select a file first', 'error');
+        return;
     }
 
     const formData = new FormData();
     formData.append('file', file);
 
-    statusEl.textContent = `Uploading ${file.name}...`;
-    statusEl.className = "text-xs text-right mb-2 text-brand-light animate-pulse";
+    const originalText = upBtn.innerHTML;
+    upBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+    upBtn.disabled = true;
 
-    const response = await fetch('/upload_payload', {
-      method: 'POST',
-      body: formData
-    });
+    try {
+        const response = await fetch('/upload_payload', {
+            method: 'POST',
+            body: formData
+        });
 
-    if (!response.ok) throw new Error(`Status ${response.status}`);
+        if (!response.ok) throw new Error(`Status ${response.status}`);
 
-    const result = await response.json();
-    
-    statusEl.textContent = 'Upload successful';
-    statusEl.className = "text-xs text-right mb-2 text-green-500 font-bold";
+        Toast.show(`Successfully uploaded ${file.name}`, 'success');
+        fileInput.value = ""; 
+        await loadpayloads();
 
-    fileInput.value = ""; 
-    await loadpayloads();
-
-    setTimeout(() => {
-        statusEl.textContent = "";
-    }, 3000);
-
-  } catch (error) {
-    console.error('Upload error:', error);
-    document.getElementById('uploadStatus').textContent = 'Upload failed';
-    document.getElementById('uploadStatus').className = "text-xs text-right mb-2 text-red-500 font-bold";
-  }
+    } catch (error) {
+        console.error('Upload error:', error);
+        Toast.show('Upload failed: ' + error.message, 'error');
+    } finally {
+        upBtn.innerHTML = originalText;
+        upBtn.disabled = false;
+    }
 }
 
 async function saveIP() {
@@ -129,13 +123,93 @@ async function setip(str) {
     });
 }
 
+async function saveFTPPort() {
+    const portInput = document.getElementById("FTP_PORT");
+    const portValue = portInput.value;
+    if (portValue.trim() !== "") {
+        await fetch('/edit_ftp_port', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: portValue })
+        });
+    }
+}
+
+async function loadFTPPort() {
+    try {
+        const savedPort = await getJSONValue('static/config/settings.json', 'ftp_port');
+        if (savedPort) {
+            document.getElementById('FTP_PORT').value = savedPort;
+        } else {
+            document.getElementById('FTP_PORT').value = '1337'; 
+        }
+    } catch (error) {
+        console.error('Error loading FTP Port:', error);
+    }
+}
+
+async function installDownload0() {
+    const btn = document.getElementById('btn-update-dl0');
+    const originalText = btn.innerHTML;
+    
+    if(!confirm("Install local download0.dat to PS5? Ensure you updated it in Repos first.")) return;
+
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Installing...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/tools/update_download0', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            Toast.show(data.message, 'success');
+        } else {
+            Toast.show('Error: ' + data.message, 'error');
+        }
+    } catch (error) {
+        Toast.show('Connection Error: ' + error, 'error');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function blockUpdates() {
+    const btn = document.getElementById('btn-block-upd');
+    const originalText = btn.innerHTML;
+    
+    if(!confirm("This will patch system files to block updates. Proceed?")) return;
+
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Patching...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/tools/block_updates', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            Toast.show(data.message, 'success');
+        } else {
+            Toast.show('Error: ' + data.message, 'error');
+        }
+    } catch (error) {
+        Toast.show('Connection Error: ' + error, 'error');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
 async function SendPayload(str="") {
     const btn = document.getElementById('SJB');
 
     try {
         if(!str) {
             btn.disabled = true;
-            btn.classList.add('opacity-50');
+            btn.classList.add('opacity-80', 'cursor-wait');
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-3xl"></i><span>Running...</span>';
+        } else {
+            Toast.show('Sending payload...', 'info');
         }
 
         const response = await fetch('/send_payload', {
@@ -147,21 +221,22 @@ async function SendPayload(str="") {
             })
         });
 
-        const text = await response.text();
+        const data = await response.json();
         
-        if(!str) {
-            console.log('Jailbreak command sent.');
+        if (response.ok) {
+             if(!str) Toast.show('Jailbreak command sent!', 'success');
+             else Toast.show('Payload sent successfully', 'success');
         } else {
-            console.log("Payload sent: " + str);
+             Toast.show(data.error || 'Failed to send payload', 'error');
         }
-        
-        return text;
+
     } catch (error) {
-        alert('Error: ' + error);
+        Toast.show('Connection Error: ' + error, 'error');
     } finally {
         if(!str) {
             btn.disabled = false;
-            btn.classList.remove('opacity-50');
+            btn.classList.remove('opacity-80', 'cursor-wait');
+            btn.innerHTML = '<i class="fa-solid fa-bolt text-3xl"></i><span>Jailbreak</span>';
         }
     }
 }
@@ -170,19 +245,26 @@ async function DeletePayload(str) {
     if(!confirm(`Delete ${str}?`)) return;
 
     try {
-        await fetch('/delete_payload', {
+        const response = await fetch('/delete_payload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ payload: str })
         });
-        await loadpayloads();
+        
+        if(response.ok) {
+            Toast.show(`${str} deleted`, 'success');
+            await loadpayloads();
+        } else {
+            Toast.show('Failed to delete file', 'error');
+        }
     } catch (error) {
-        alert(error);
+        Toast.show(error.message, 'error');
     }
 }
 
 async function loadsettings() {
     await loadIP();
+    await loadFTPPort();
     await loadAJB();
     await loadpayloads();
 }
@@ -192,6 +274,11 @@ async function loadpayloads() {
         const response = await fetch('/list_payloads');
         const files = await response.json();
         const listElement = document.getElementById('PL');
+        const countElement = document.getElementById('payload-count');
+
+        if (countElement) {
+            countElement.textContent = files ? files.length : 0;
+        }
         
         listElement.innerHTML = ''; 
 
