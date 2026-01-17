@@ -123,6 +123,83 @@ async function setip(str) {
     });
 }
 
+async function saveFTPPort() {
+    const portInput = document.getElementById("FTP_PORT");
+    const portValue = portInput.value;
+    if (portValue.trim() !== "") {
+        await fetch('/edit_ftp_port', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: portValue })
+        });
+    }
+}
+
+async function loadFTPPort() {
+    try {
+        const savedPort = await getJSONValue('static/config/settings.json', 'ftp_port');
+        if (savedPort) {
+            document.getElementById('FTP_PORT').value = savedPort;
+        } else {
+            document.getElementById('FTP_PORT').value = '1337'; 
+        }
+    } catch (error) {
+        console.error('Error loading FTP Port:', error);
+    }
+}
+
+async function installDownload0() {
+    const btn = document.getElementById('btn-update-dl0');
+    const originalText = btn.innerHTML;
+    
+    if(!confirm("Install local download0.dat to PS5? Ensure you updated it in Repos first.")) return;
+
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Installing...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/tools/update_download0', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            Toast.show(data.message, 'success');
+        } else {
+            Toast.show('Error: ' + data.message, 'error');
+        }
+    } catch (error) {
+        Toast.show('Connection Error: ' + error, 'error');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function blockUpdates() {
+    const btn = document.getElementById('btn-block-upd');
+    const originalText = btn.innerHTML;
+    
+    if(!confirm("This will patch system files to block updates. Proceed?")) return;
+
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Patching...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/tools/block_updates', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            Toast.show(data.message, 'success');
+        } else {
+            Toast.show('Error: ' + data.message, 'error');
+        }
+    } catch (error) {
+        Toast.show('Connection Error: ' + error, 'error');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
 async function SendPayload(str="") {
     const btn = document.getElementById('SJB');
 
@@ -187,6 +264,7 @@ async function DeletePayload(str) {
 
 async function loadsettings() {
     await loadIP();
+    await loadFTPPort();
     await loadAJB();
     await loadpayloads();
 }
