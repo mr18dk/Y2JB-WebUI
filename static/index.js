@@ -89,7 +89,6 @@ async function saveIP() {
 async function loadIP() {
     try {
         const savedIP = await getJSONValue('static/config/settings.json', 'ip');
-        // Better check to handle undefined values
         if (savedIP) {
             document.getElementById('IP').value = savedIP;
         } else {
@@ -308,13 +307,15 @@ async function togglePayloadIndex(filename, checkbox) {
 
 async function loadpayloads() {
     try {
-        const [filesRes, configRes] = await Promise.all([
+        const [filesRes, configRes, orderRes] = await Promise.all([
             fetch('/list_payloads'),
-            fetch('/api/payload_config')
+            fetch('/api/payload_config'),
+            fetch('/api/payload_order')
         ]);
         
-        const files = await filesRes.json();
+        let files = await filesRes.json();
         const config = await configRes.json();
+        const order = await orderRes.json();
 
         const listElement = document.getElementById('PL');
         const countElement = document.getElementById('payload-count');
@@ -332,25 +333,41 @@ async function loadpayloads() {
 
         document.getElementById('empty-state').classList.add('hidden');
 
+        if (order && order.length > 0) {
+            const weights = {};
+            order.forEach((name, index) => weights[name] = index);
+            files.sort((a, b) => {
+                const wa = weights[a.split('/').pop()] ?? 9999;
+                const wb = weights[b.split('/').pop()] ?? 9999;
+                return wa - wb;
+            });
+        }
+
         files.forEach(file => {
             const configKey = file.split('/').pop();
             const isEnabled = config[configKey] !== false && config[file] !== false;
 
             const card = document.createElement('li');
-            card.className = "input-field border rounded-xl p-4 flex items-center justify-between group transition-colors hover:border-brand-blue";
+            card.className = "draggable-item input-field border rounded-xl p-2 pr-4 flex items-center justify-between group transition-colors hover:border-brand-blue mb-3 bg-black/20";
+            card.draggable = true;
+            card.dataset.filename = configKey;
             
             card.innerHTML = `
-                <div class="flex items-center gap-4 overflow-hidden">
-                    <div class="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <div class="flex items-center gap-2 overflow-hidden flex-1">
+                    <div class="drag-handle touch-manipulation">
+                        <i class="fa-solid fa-grip-vertical"></i>
+                    </div>
+
+                    <div class="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg shrink-0">
                         <i class="fa-solid fa-microchip text-xl opacity-70"></i>
                     </div>
-                    <div class="flex flex-col overflow-hidden">
+                    <div class="flex flex-col overflow-hidden min-w-0">
                         <span class="font-medium text-sm truncate" title="${file}">${file}</span>
                         <span class="text-[10px] opacity-50 uppercase tracking-wide">Payload</span>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 shrink-0 ml-4">
                     <div class="flex items-center gap-2 border-r pr-3 border-gray-300 dark:border-gray-700" title="Enable Autoload">
                         <span class="text-[10px] opacity-40 font-bold uppercase hidden sm:inline">Auto</span>
                         <label class="relative inline-flex items-center cursor-pointer">
@@ -359,7 +376,7 @@ async function loadpayloads() {
                         </label>
                     </div>
 
-                    <button onclick="SendPayload('payloads/${file}')" class="px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-brand-blue hover:text-white rounded-lg text-xs font-bold transition-colors">
+                    <button onclick="SendPayload('payloads/${file}')" class="px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-brand-blue hover:text-white rounded-lg text-xs font-bold transition-colors shadow-sm">
                         LOAD
                     </button>
                     <button onclick="DeletePayload('${file}')" class="p-2 text-gray-400 hover:text-red-500 transition-colors">
@@ -369,8 +386,16 @@ async function loadpayloads() {
             `;
             listElement.appendChild(card);
         });
+
+        if (typeof enableDragSort === "function") {
+            enableDragSort('PL', () => {
+                saveCurrentOrder('PL');
+            });
+        }
+
     } catch (e) {
         console.error(e);
+        Toast.show('Failed to load payloads', 'error');
     }
 }
 

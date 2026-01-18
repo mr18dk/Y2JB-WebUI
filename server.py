@@ -27,6 +27,7 @@ DAT_DIR = "payloads/dat"
 CONFIG_DIR = "static/config"
 CONFIG_FILE = os.path.join(CONFIG_DIR, "settings.json")
 PAYLOAD_CONFIG_FILE = os.path.join(CONFIG_DIR, "payload_config.json")
+PAYLOAD_ORDER_FILE = os.path.join(CONFIG_DIR, "payload_order.json")
 ALLOWED_EXTENSIONS = {'bin', 'elf', 'js', 'dat'}
 url = "http://localhost:8000/send_payload"
 
@@ -47,6 +48,19 @@ def get_payload_config():
             return json.load(f)
     except:
         return {}
+
+def get_payload_order():
+    if not os.path.exists(PAYLOAD_ORDER_FILE):
+        return []
+    try:
+        with open(PAYLOAD_ORDER_FILE, 'r') as f:
+            return json.load(f)
+    except:
+        return []
+
+def save_payload_order(order):
+    with open(PAYLOAD_ORDER_FILE, 'w') as f:
+        json.dump(order, f, indent=4)
 
 def save_payload_config(config):
     with open(PAYLOAD_CONFIG_FILE, 'w') as f:
@@ -130,6 +144,19 @@ def toggle_payload_config():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/payload_order', methods=['GET', 'POST'])
+def handle_payload_order():
+    if request.method == 'GET':
+        return jsonify(get_payload_order())
+    
+    if request.method == 'POST':
+        try:
+            order = request.json.get('order', [])
+            save_payload_order(order)
+            return jsonify({"success": True})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 @app.route('/edit_ajb', methods=['POST'])
 def edit_ajb():
@@ -232,7 +259,15 @@ def sending_payload():
                 time.sleep(10)
                 
                 if result:
-                    for filename in os.listdir(PAYLOAD_DIR):
+                    files = os.listdir(PAYLOAD_DIR)
+                    try:
+                        order = get_payload_order()
+                        weights = {name: i for i, name in enumerate(order)}
+                        files.sort(key=lambda x: weights.get(x, 9999))
+                    except Exception as e:
+                        print(f"[SORT] Error sorting payloads: {e}")
+
+                    for filename in files:
                         if not config.get(filename, True):
                             print(f"[SKIP] {filename} (Disabled in settings)")
                             continue
