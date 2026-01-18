@@ -14,6 +14,9 @@ import time
 import threading
 import requests
 import socket
+from src.ftp_manager import list_ftp_directory, delete_item, create_directory, rename_item, download_file_content, upload_file_content
+import io
+from flask import send_file
 
 app = Flask(__name__)
 app.secret_key = 'Nazky'
@@ -427,6 +430,93 @@ def network_info():
         "server_ip": server_ip,
         "client_ip": client_ip
     })
+
+@app.route('/ftp')
+def ftp_page():
+    return render_template('ftp.html')
+
+@app.route('/api/ftp/list', methods=['POST'])
+def api_ftp_list():
+    config = get_config()
+    ip = config.get("ip")
+    port = config.get("ftp_port", "1337")
+    path = request.json.get('path', '/')
+    
+    if not ip:
+        return jsonify({"success": False, "error": "IP not configured"}), 400
+        
+    result = list_ftp_directory(ip, port, path)
+    if result['success']:
+        return jsonify(result)
+    else:
+        return jsonify(result), 500
+
+@app.route('/api/ftp/download_file', methods=['POST'])
+def api_ftp_download():
+    config = get_config()
+    ip = config.get("ip")
+    port = config.get("ftp_port", "1337")
+    path = request.json.get('path')
+    
+    result = download_file_content(ip, port, path)
+    if result['success']:
+        if request.json.get('as_text'):
+            try:
+                return jsonify({"success": True, "content": result['content'].decode('utf-8')})
+            except:
+                return jsonify({"success": False, "error": "Could not decode file as text"})
+        
+        filename = os.path.basename(path)
+        return send_file(
+            io.BytesIO(result['content']),
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/octet-stream'
+        )
+    return jsonify(result), 500
+
+@app.route('/api/ftp/upload_file', methods=['POST'])
+def api_ftp_upload():
+    config = get_config()
+    ip = config.get("ip")
+    port = config.get("ftp_port", "1337")
+    
+    path = request.form.get('path')
+    file = request.files.get('file')
+    
+    text_content = request.form.get('content')
+    
+    if text_content is not None:
+        result = upload_file_content(ip, port, path, text_content.encode('utf-8'))
+        return jsonify(result)
+
+    if file:
+        file_content = file.read()
+        filename = secure_filename(file.filename)
+        full_path = f"{path.rstrip('/')}/{filename}"
+        result = upload_file_content(ip, port, full_path, file_content)
+        return jsonify(result)
+        
+    return jsonify({"success": False, "error": "No data provided"}), 400
+
+@app.route('/api/ftp/action', methods=['POST'])
+def api_ftp_action():
+    config = get_config()
+    ip = config.get("ip")
+    port = config.get("ftp_port", "1337")
+    
+    data = request.json
+    action = data.get('action')
+    path = data.get('path')
+    
+    if action == 'delete':
+        return jsonify(delete_item(ip, port, path, data.get('is_dir', False)))
+    elif action == 'mkdir':
+        return jsonify(create_directory(ip, port, path))
+    elif action == 'rename':
+        return jsonify(rename_item(ip, port, path, data.get('new_path')))
+        
+    return jsonify({"success": False, "error": "Invalid action"}), 400
 
 if __name__ == "__main__":
     threading.Thread(target=check_ajb, daemon=True).start()
