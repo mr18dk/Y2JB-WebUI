@@ -1,6 +1,6 @@
 <center><h1>Y2JB-WebUI</h1></center>
 <center><h2>Manage Y2JB using a WebUI</h2></center>
-<center><a href="https://discord.gg/7CcBNJup2j"><img src="https://img.shields.io/discord/1071158580854292550?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a></center>
+<center><a href="https://discord.gg/7CcBNJup2j"><img src="https://img.shields.io/discord/1463591261461155935?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a></center>
 
 ---
 
